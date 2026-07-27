@@ -11,8 +11,8 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "FinOpenPOS",
-  description: "Open-source point of sale system",
+  title: "Jabonera Natural",
+  description: "Sistema de gestión para jabonería artesanal y productos naturales",
 };
 
 export default async function RootLayout({

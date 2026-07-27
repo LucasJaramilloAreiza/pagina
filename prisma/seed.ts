@@ -18,29 +18,29 @@ async function main() {
   const customers = await prisma.customer.createMany({
     data: [
       {
-        name: 'Acme Metal S.A.',
-        email: 'compras@acmemetal.com',
+        name: 'Aromas del Valle S.A.',
+        email: 'contacto@aromasdelvalle.com',
         phone: '+56 2 2222 1111',
         taxId: '76.123.456-7',
-        address: 'Av. Industrial 1200, Santiago',
+        address: 'Camino de los Aromas 1200, Santiago',
         status: 'ACTIVE',
         createdById: admin.id,
       },
       {
-        name: 'Grupo Norte Ltda.',
-        email: 'pedidos@gruponorte.cl',
+        name: 'Hierbas de la Araucanía Ltda.',
+        email: 'pedidos@hierbasaraucania.cl',
         phone: '+56 9 3333 4444',
         taxId: '76.654.321-8',
-        address: 'Calle Fábrica 45, Concepción',
+        address: 'Ruta del Bosque 45, Villarrica',
         status: 'ACTIVE',
         createdById: admin.id,
       },
       {
-        name: 'Industrial Sur SPA',
-        email: 'operaciones@industrialsur.cl',
+        name: 'Esencias Puras SPA',
+        email: 'ventas@esenciaspuras.cl',
         phone: '+56 9 5555 6666',
         taxId: '76.987.654-9',
-        address: 'Ruta 5 Norte km 30, Talca',
+        address: 'Av. Natural 300, Valdivia',
         status: 'ACTIVE',
         createdById: admin.id,
       },
@@ -50,19 +50,21 @@ async function main() {
 
   const categories = await prisma.category.createMany({
     data: [
-      { name: 'Herramientas', description: 'Equipos y herramientas de mantenimiento' },
-      { name: 'Mecánica', description: 'Repuestos y componentes industriales' },
-      { name: 'Seguridad', description: 'Elementos de protección y seguridad' },
+      { name: 'Natural/Hierbas', description: 'Ingredientes botánicos y bases naturales' },
+      { name: 'Aromas/Esencia', description: 'Esencias aromáticas puras para jabones' },
+      { name: 'Aromas/Aceite', description: 'Aceites esenciales para fragancias premium' },
+      { name: 'Natural/Base', description: 'Bases de jabón y mantecas naturales' },
+      { name: 'Natural/Exfoliante', description: 'Ingredientes exfoliantes naturales' },
     ],
     skipDuplicates: true,
   });
 
   const products = [
-    { sku: 'MTL-001', name: 'Taladro industrial', description: 'Taladro de 20V para uso continuo', price: 129000, stock: 24, categoryName: 'Herramientas' },
-    { sku: 'MTL-002', name: 'Sensor de presión', description: 'Sensor para líneas de producción', price: 89000, stock: 7, categoryName: 'Mecánica' },
-    { sku: 'MTL-003', name: 'Guantes de seguridad', description: 'Guantes resistentes para operación', price: 18000, stock: 45, categoryName: 'Seguridad' },
-    { sku: 'MTL-004', name: 'Correa transportadora', description: 'Correa para flujo de material', price: 245000, stock: 3, categoryName: 'Mecánica' },
-    { sku: 'MTL-005', name: 'Estación de carga', description: 'Carga para baterías de herramientas', price: 99000, stock: 12, categoryName: 'Herramientas' },
+    { sku: 'JAB-LAV-01', name: 'Jabón de Lavanda Artesanal', description: 'Jabón suave con infusión de lavanda y extractos botánicos.', price: 12900, stock: 24, categoryName: 'Natural/Hierbas' },
+    { sku: 'EUC-ESS-01', name: 'Esencia de Eucalipto (ml)', description: 'Esencia fresca de eucalipto para jabones aromáticos.', price: 8500, stock: 40, categoryName: 'Aromas/Esencia' },
+    { sku: 'TEG-ESS-01', name: 'Aceite Esencial de Té Verde (ml)', description: 'Aceite esencial premium para jabones revitalizantes.', price: 9800, stock: 30, categoryName: 'Aromas/Aceite' },
+    { sku: 'KAR-BASE-01', name: 'Jabón de Manteca de Karité', description: 'Jabón nutritivo con manteca de karité para piel seca.', price: 14500, stock: 18, categoryName: 'Natural/Base' },
+    { sku: 'CAF-EXF-01', name: 'Jabón Exfoliante de Café', description: 'Jabón energizante con partículas de café natural.', price: 13900, stock: 12, categoryName: 'Natural/Exfoliante' },
   ];
 
   for (const product of products) {

@@ -2,14 +2,15 @@ type KpiCardProps = {
   title: string;
   value: string;
   detail: string;
-  tone?: 'default' | 'rose' | 'emerald' | 'blue';
+  tone?: 'default' | 'rose' | 'emerald' | 'blue' | 'amber';
 };
 
 const toneStyles = {
-  default: 'border-slate-200 bg-white text-slate-800',
+  default: 'border-emerald-200 bg-emerald-50 text-emerald-900',
   rose: 'border-rose-200 bg-rose-50 text-rose-700',
-  emerald: 'border-emerald-200 bg-emerald-50 text-emerald-700',
+  emerald: 'border-green-200 bg-green-50 text-green-900',
   blue: 'border-blue-200 bg-blue-50 text-blue-700',
+  amber: 'border-amber-200 bg-amber-50 text-amber-900',
 };
 
 export function KpiCard({ title, value, detail, tone = 'default' }: KpiCardProps) {

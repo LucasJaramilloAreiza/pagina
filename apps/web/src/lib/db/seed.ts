@@ -50,14 +50,40 @@ export async function seed() {
   const userId = signUpRes.user.id;
 
   // ── Customers ────────────────────────────────────────────────────────────
-  const customerValues = Array.from({ length: 20 }, () => ({
-    name: faker.person.fullName(),
-    email: faker.internet.email().toLowerCase(),
-    phone: faker.phone.number({ style: "national" }),
-    user_uid: userId,
-    status: faker.helpers.arrayElement(["active", "active", "active", "inactive"]),
-    created_at: faker.date.recent({ days: 90 }),
-  }));
+  const customerValues = [
+    {
+      name: 'Aromas del Valle S.A.',
+      email: 'contacto@aromasdelvalle.com',
+      phone: '+56 2 2222 1111',
+      user_uid: userId,
+      status: 'active',
+      created_at: faker.date.recent({ days: 90 }),
+    },
+    {
+      name: 'Hierbas de la Araucanía Ltda.',
+      email: 'pedidos@hierbasaraucania.cl',
+      phone: '+56 9 3333 4444',
+      user_uid: userId,
+      status: 'active',
+      created_at: faker.date.recent({ days: 90 }),
+    },
+    {
+      name: 'Esencias Puras SPA',
+      email: 'ventas@esenciaspuras.cl',
+      phone: '+56 9 5555 6666',
+      user_uid: userId,
+      status: 'active',
+      created_at: faker.date.recent({ days: 90 }),
+    },
+    ...Array.from({ length: 17 }, () => ({
+      name: faker.company.name(),
+      email: faker.internet.email().toLowerCase(),
+      phone: faker.phone.number({ style: 'national' }),
+      user_uid: userId,
+      status: faker.helpers.arrayElement(['active', 'active', 'active', 'inactive']),
+      created_at: faker.date.recent({ days: 90 }),
+    })),
+  ];
 
   const insertedCustomers = await db
     .insert(customers)
@@ -66,22 +92,29 @@ export async function seed() {
 
   // ── Products ─────────────────────────────────────────────────────────────
   const productNames: Record<string, string[]> = {
-    electronics: [
-      "Wireless Mouse", "Mechanical Keyboard", "USB-C Hub", "Webcam HD",
-      "Bluetooth Speaker", "LED Monitor 24\"", "Phone Charger", "HDMI Cable",
+    'Natural/Hierbas': [
+      'Jabón de Lavanda',
+      'Jabón de Romero',
+      'Jabón de Manzanilla',
+      'Jabón de Avena y Miel',
     ],
-    clothing: [
-      "Cotton T-Shirt", "Denim Jacket", "Running Shoes", "Baseball Cap",
-      "Wool Scarf", "Leather Belt", "Polo Shirt", "Cargo Pants",
+    'Aromas/Esencia': [
+      'Esencia de Eucalipto',
+      'Esencia de Lavanda',
+      'Esencia de Naranja',
+      'Esencia de Rosa',
     ],
-    books: [
-      "Clean Code", "Design Patterns", "The Pragmatic Programmer",
-      "Refactoring", "Domain-Driven Design", "System Design Interview",
-      "JavaScript: The Good Parts", "Learning SQL",
+    'Aromas/Aceite': [
+      'Aceite Esencial de Té Verde',
+      'Aceite Esencial de Bergamota',
+      'Aceite de Almendras',
+      'Aceite de Jojoba',
     ],
-    home: [
-      "Ceramic Mug", "Desk Lamp", "Wall Clock", "Throw Pillow",
-      "Kitchen Scale", "Glass Vase", "Bath Towel Set", "Scented Candle",
+    'Natural/Exfoliante': [
+      'Jabón Exfoliante de Café',
+      'Jabón de Azúcar y Limón',
+      'Jabón de Avena Exfoliante',
+      'Jabón de Sal Marina',
     ],
   };
 

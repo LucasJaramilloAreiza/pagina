@@ -74,19 +74,19 @@ export default async function PedidosPage({
   ]);
 
   return (
-    <main className="min-h-screen bg-slate-50 px-4 py-6 text-slate-800 sm:px-6 lg:px-8">
+    <main className="min-h-screen bg-green-50 px-4 py-6 text-green-900 sm:px-6 lg:px-8">
       <div className="mx-auto flex max-w-4xl flex-col gap-4">
-        <header className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <p className="text-sm font-medium uppercase tracking-[0.2em] text-blue-600">Logística</p>
-          <h1 className="mt-2 text-2xl font-semibold text-slate-900">Crear pedido</h1>
-          <p className="mt-2 text-sm text-slate-600">
-            Registra órdenes de pedido y reserva automáticamente el stock disponible.
+        <header className="rounded-2xl border border-green-200 bg-white p-5 shadow-lg">
+          <p className="text-sm font-medium uppercase tracking-[0.2em] text-amber-700">Pedidos & Aromas</p>
+          <h1 className="mt-2 text-2xl font-semibold text-green-900">Gestión de pedidos jaboneros</h1>
+          <p className="mt-2 text-sm text-green-700">
+            Registra órdenes de pedido y reserva stock para tu línea de jabones naturales.
           </p>
         </header>
 
         {status === 'success' ? (
-          <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-700">
-            Pedido creado correctamente y el inventario fue actualizado.
+          <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-700">
+            Pedido creado correctamente y el inventario se actualizó.
           </div>
         ) : null}
 
@@ -102,11 +102,11 @@ export default async function PedidosPage({
           </div>
         ) : null}
 
-        <form action={createOrderAction} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+        <form action={createOrderAction} className="rounded-2xl border border-green-200 bg-white p-4 shadow-lg sm:p-6">
           <div className="flex flex-col gap-4">
-            <label className="flex flex-col gap-2 text-sm font-medium text-slate-700">
+            <label className="flex flex-col gap-2 text-sm font-medium text-green-800">
               Cliente
-              <select name="customerId" className="rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-base text-slate-800 outline-none focus:border-blue-500" required>
+              <select name="customerId" className="rounded-xl border border-green-300 bg-green-50 px-4 py-3 text-base text-green-900 outline-none focus:border-green-700" required>
                 <option value="" disabled>Selecciona un cliente</option>
                 {customers.map((customer) => (
                   <option key={customer.id} value={customer.id}>
@@ -116,9 +116,9 @@ export default async function PedidosPage({
               </select>
             </label>
 
-            <label className="flex flex-col gap-2 text-sm font-medium text-slate-700">
+            <label className="flex flex-col gap-2 text-sm font-medium text-green-800">
               Producto
-              <select name="productId" className="rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-base text-slate-800 outline-none focus:border-blue-500" required>
+              <select name="productId" className="rounded-xl border border-green-300 bg-green-50 px-4 py-3 text-base text-green-900 outline-none focus:border-green-700" required>
                 <option value="" disabled>Selecciona un producto</option>
                 {products.map((product) => (
                   <option key={product.id} value={product.id}>
@@ -128,12 +128,12 @@ export default async function PedidosPage({
               </select>
             </label>
 
-            <label className="flex flex-col gap-2 text-sm font-medium text-slate-700">
+            <label className="flex flex-col gap-2 text-sm font-medium text-green-800">
               Cantidad
-              <input name="quantity" type="number" min="1" step="1" placeholder="Ej. 5" className="rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-base text-slate-800 outline-none focus:border-blue-500" required />
+              <input name="quantity" type="number" min="1" step="1" placeholder="Ej. 5" className="rounded-xl border border-green-300 bg-green-50 px-4 py-3 text-base text-green-900 outline-none focus:border-green-700" required />
             </label>
 
-            <button type="submit" className="rounded-xl bg-blue-600 px-4 py-3 text-base font-semibold text-white transition hover:bg-blue-700">
+            <button type="submit" className="rounded-xl bg-green-900 px-4 py-3 text-base font-semibold text-white transition hover:bg-green-800">
               Crear pedido
             </button>
           </div>

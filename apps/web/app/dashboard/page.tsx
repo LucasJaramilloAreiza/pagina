@@ -1,23 +1,26 @@
-import { PrismaClient } from '@prisma/client';
+import { db } from '@/lib/db';
+import { customers, products } from '@/lib/db/schema';
 import { InventoryTable } from '@/components/InventoryTable';
 import { CustomerList } from '@/components/CustomerList';
 import { KpiCard } from '@/components/KpiCard';
 
-const prisma = new PrismaClient();
-
 async function getDashboardData() {
-  const [customers, products] = await Promise.all([
-    prisma.customer.findMany({
-      orderBy: { createdAt: 'desc' },
-      take: 6,
-    }),
-    prisma.product.findMany({
-      orderBy: { stock: 'asc' },
-      include: { category: true },
-    }),
+  const [customersList, productsList] = await Promise.all([
+    db.select().from(customers).orderBy(customers.created_at, 'desc').limit(6),
+    db
+      .select({
+        id: products.id,
+        name: products.name,
+        codigo_barras: products.codigo_barras,
+        stock: products.in_stock,
+        price: products.price,
+        category: products.category,
+      })
+      .from(products)
+      .orderBy(products.in_stock, 'asc'),
   ]);
 
-  return { customers, products };
+  return { customers: customersList, products: productsList };
 }
 
 export default async function DashboardPage() {
@@ -31,35 +34,35 @@ export default async function DashboardPage() {
   const alertLevel = 'Moderado';
 
   return (
-    <main className="min-h-screen bg-slate-50 px-4 py-8 text-slate-800 sm:px-6 lg:px-8">
+    <main className="min-h-screen bg-green-50 px-4 py-8 text-green-900 sm:px-6 lg:px-8">
       <div className="mx-auto flex max-w-7xl flex-col gap-6">
-        <header className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <p className="text-sm font-medium uppercase tracking-[0.2em] text-blue-600">Panel de control</p>
-          <h1 className="mt-2 text-3xl font-semibold text-slate-900">CRM e inventario</h1>
-          <p className="mt-2 max-w-2xl text-sm text-slate-600">
-            Vista ejecutiva para supervisar clientes clave y el estado del inventario industrial.
+        <header className="rounded-2xl border border-green-200 bg-white p-6 shadow-lg">
+          <p className="text-sm font-medium uppercase tracking-[0.2em] text-amber-700">Panel de Gestión Jabonera</p>
+          <h1 className="mt-2 text-3xl font-semibold text-green-900">Dashboard de Inventario Natural</h1>
+          <p className="mt-2 max-w-2xl text-sm text-green-700">
+            Monitorea clientes, ingredientes y lotes terminados en un dashboard elegante y natural.
           </p>
         </header>
 
         <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <KpiCard title="Producción Diaria" value={`${dailyProduction} cajas`} detail="Últimas 24 horas" tone="blue" />
-          <KpiCard title="Rendimiento por Hora" value={performance} detail="Eficiencia general" tone="emerald" />
-          <KpiCard title="Pedidos Pendientes" value={`${pendingOrders}`} detail="En seguimiento" tone="default" />
-          <KpiCard title="Nivel de Alerta de Inventario" value={alertLevel} detail={`${lowStockCount} productos bajo stock`} tone="rose" />
+          <KpiCard title="Producción Diaria" value={`${dailyProduction} unidades`} detail="Últimas 24 horas" tone="emerald" />
+          <KpiCard title="Rendimiento" value={performance} detail="Eficiencia general" tone="amber" />
+          <KpiCard title="Pedidos Pendientes" value={`${pendingOrders}`} detail="Listos para procesar" tone="emerald" />
+          <KpiCard title="Alerta de Stock" value={alertLevel} detail={`${lowStockCount} insumos bajos`} tone="rose" />
         </section>
 
         <section className="grid gap-4 md:grid-cols-3">
-          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-            <p className="text-sm text-slate-500">Clientes activos</p>
-            <p className="mt-2 text-2xl font-semibold text-slate-900">{customers.length}</p>
+          <div className="rounded-2xl border border-green-200 bg-white p-4 shadow-lg">
+            <p className="text-sm text-green-600">Clientes activos</p>
+            <p className="mt-2 text-2xl font-semibold text-green-900">{customers.length}</p>
           </div>
-          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-            <p className="text-sm text-slate-500">Productos con stock bajo</p>
-            <p className="mt-2 text-2xl font-semibold text-rose-600">{lowStockCount}</p>
+          <div className="rounded-2xl border border-green-200 bg-white p-4 shadow-lg">
+            <p className="text-sm text-green-600">Ingredientes críticos</p>
+            <p className="mt-2 text-2xl font-semibold text-amber-700">{lowStockCount}</p>
           </div>
-          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-            <p className="text-sm text-slate-500">Inventario saludable</p>
-            <p className="mt-2 text-2xl font-semibold text-emerald-600">{healthyStockCount}</p>
+          <div className="rounded-2xl border border-green-200 bg-white p-4 shadow-lg">
+            <p className="text-sm text-green-600">Lotes saludables</p>
+            <p className="mt-2 text-2xl font-semibold text-green-800">{healthyStockCount}</p>
           </div>
         </section>
 
