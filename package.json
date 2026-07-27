@@ -25,7 +25,9 @@
   },
   "type": "module",
   "scripts": {
-    "dev": "turbo dev",
+    "setup": "bun run scripts/setup.ts",
+    "db:init": "bunx prisma db push && bunx prisma generate && bun run db:seed",
+    "dev": "turbo dev --filter=web",
     "build": "turbo build",
     "check-types": "turbo check-types",
     "dev:web": "turbo -F web dev",
