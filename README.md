@@ -1,67 +1,43 @@
-# Sistema ERP/CRM Industrial
+# 🌿 ERP Jabonera Natural
 
-Plataforma web para la digitalización de procesos operativos, gestión de inventario, producción en planta (mobile-first) y logística.
+> **Sistema integral de gestión de inventario, producción y ventas.** 
+> Construido con Next.js (App Router), Tailwind CSS y Prisma ORM.
 
-## Arquitectura
+---
 
-Este repositorio contiene una aplicación empresarial basada en Next.js App Router con un backend enlazado a Prisma y PostgreSQL. Está organizado como monorepo con Turborepo para gestionar el frontend, el paquete fiscal y los servicios compartidos.
+## 🚀 Estado Actual (v1.2)
 
-## Stack tecnológico
+El sistema ha sido migrado exitosamente a una arquitectura de datos unificada, eliminando dependencias obsoletas (Drizzle) y consolidando la lógica de negocio 100% en Prisma.
 
-- Next.js (App Router)
-- Prisma (PostgreSQL)
-- Tailwind CSS
-- Docker
-- Turborepo
-- Bun
+### 📦 Módulos Implementados
 
-## Inicio rápido
+| Módulo | Estado | Core Técnico | Descripción |
+| :--- | :---: | :--- | :--- |
+| **Inventario** | 🟢 Listo | `InventoryItem` | Modelo centralizado. Separa Materias Primas (`RAW_MATERIAL`) y Productos Terminados (`FINISHED`). |
+| **Producción** | 🟢 Listo | `ProductionBatch` | Transacciones atómicas: Descuenta insumos y suma productos al instante mediante lotes. |
+| **Pedidos** | 🟢 Listo | `Order` / `OrderItem` | Creación de órdenes de venta que descuentan exclusivamente productos terminados del stock. |
+| **Kardex** | 🟢 Listo | `InventoryTransaction`| Auditoría inmutable de movimientos. Interfaz UI integrada con clasificación de Entradas (+) y Salidas (-). |
 
-Sigue exactamente estos pasos para poner el proyecto en marcha localmente:
+---
 
-1. `bun install`
-2. `bun run setup` (Genera automáticamente las variables de entorno).
-3. `docker compose up -d db` (Levanta la base de datos).
-4. `bun run db:init` (Sincroniza Prisma e inyecta datos de prueba).
-5. `bun run dev` (Inicia el entorno de desarrollo).
+## 🗄️ Arquitectura de Base de Datos
 
-## Flujo local recomendado
+El sistema utiliza una base de datos relacional PostgreSQL (alojada en Neon), estructurada mediante Prisma ORM. El esquema se compone de las siguientes tablas principales:
 
-- `bun run setup` crea los archivos `.env` necesarios cuando no existen.
-- `docker compose up -d db` arranca el servicio de PostgreSQL.
-- `bun run db:init` aplica el esquema Prisma y carga datos de prueba.
-- `bun run dev` inicia el entorno de desarrollo enfocado en la aplicación principal.
+*   **📦 Inventario y Catálogo:** `inventory_items`, `inventory_transactions`, `categories`
+*   **🏭 Motor de Producción:** `production_batches`, `production_stations`, `batch_inputs`, `batch_outputs`
+*   **🛒 Ventas y Clientes:** `orders`, `order_items`, `customers`
+*   **🔐 Autenticación y Seguridad:** `users`, `sessions`, `role_permissions`, `audit_logs`
+*   **⚙️ Monitoreo:** `incidents`
 
-## Estructura principal
+---
 
-- `apps/web` - aplicación Next.js principal.
-- `packages/fiscal` - motor fiscal, lógica de facturación y generación de XML.
-- `packages/db` - schema y helpers de base de datos.
-- `packages/auth` - integración y utilidades de autenticación.
-- `docs` - documentación técnica del sistema.
+## 🛠️ Mejoras de Arquitectura (Refactorización)
 
-## Módulos principales
+* **Server Actions Seguras:** Manejo correcto de `redirect()` de Next.js fuera de los bloques `try...catch` para evitar fallos de servidor.
+* **Integridad de Datos:** Uso estricto de `prisma.$transaction` para asegurar que ningún lote o venta quede a medias si hay un error.
+* **Guardrails (Barreras de seguridad):** Prevención de eliminación accidental de productos que ya tengan un historial de movimientos o ventas asociado, evitando colisiones de llaves foráneas.
+* **UI Consistente:** Nueva ruta `/kardex` acoplada exitosamente al `NavShell` con diseño minimalista en Tailwind CSS.
 
-- Inventario y catálogo de productos
-- Gestión de clientes
-- Producción en planta y control de lotes
-- Pedidos y logística con bloqueo de stock transaccional
-- Dashboard operativo con métricas clave
-- Gestión de facturación y documentos fiscales
-
-## Comandos clave
-
-- `bun run setup` - prepara el entorno local.
-- `docker compose up -d db` - levanta el servicio de base de datos.
-- `bun run db:init` - sincroniza el esquema Prisma y genera datos iniciales.
-- `bun run dev` - arranca la aplicación web en desarrollo.
-- `bun run check` - ejecuta Biome para revisión de código.
-
-## Notas
-
-- El repositorio está preparado para desarrollo local y no incluye referencias de plantillas de terceros.
-- El sistema está diseñado para priorizar movilidad en planta, seguimiento de stock y procesos logísticos empresariales.
-
-## Licencia
-
-Este proyecto respeta la licencia definida en `LICENSE`.
+---
+*Versión 1.2 - Desarrollado para mantener la trazabilidad absoluta y eficiencia de la producción jabonera.*
