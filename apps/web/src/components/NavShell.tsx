@@ -4,6 +4,7 @@ const links = [
   { href: '/dashboard', label: 'Dashboard' },
   { href: '/produccion', label: 'Producción' },
   { href: '/pedidos', label: 'Pedidos' },
+  { href: '/kardex', label: 'Kardex' },
 ];
 
 export function NavShell({ children }: { children: React.ReactNode }) {
