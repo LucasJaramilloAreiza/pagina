@@ -4,12 +4,25 @@ import { useState, type FormEvent } from "react";
 import { createProduct, deleteProduct } from "../../app/dashboard/actions";
 
 type Product = {
-  id: number;
+  id: string;
   name: string;
-  sku: string | null;
+  sku: string;
   stock: number;
-  price: number;
+  type: string;
+  unit: string;
   category: string | null;
+};
+
+const ITEM_TYPE_LABELS: Record<string, string> = {
+  RAW_MATERIAL: "Materia prima",
+  INTERMEDIATE: "Intermedio",
+  FINISHED: "Terminado",
+};
+
+const ITEM_UNIT_LABELS: Record<string, string> = {
+  KG: "kg",
+  LITER: "L",
+  UNIT: "unid.",
 };
 
 type InventoryTableProps = {
@@ -18,6 +31,7 @@ type InventoryTableProps = {
 
 export function InventoryTable({ products }: InventoryTableProps) {
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -28,7 +42,6 @@ export function InventoryTable({ products }: InventoryTableProps) {
         name: formData.get("name")?.toString().trim() ?? "",
         sku: formData.get("sku")?.toString().trim() ?? "",
         stock: Number(formData.get("stock")),
-        price: Number(formData.get("price")),
         category: formData.get("category")?.toString().trim() ?? "",
       });
       setIsFormOpen(false);
@@ -37,11 +50,11 @@ export function InventoryTable({ products }: InventoryTableProps) {
     }
   };
 
-  const handleDelete = async (productId: number) => {
-    try {
-      await deleteProduct({ productId });
-    } catch (error) {
-      console.error("Error al eliminar producto:", error);
+  const handleDelete = async (productId: string) => {
+    setDeleteError(null);
+    const result = await deleteProduct({ productId });
+    if (!result.success) {
+      setDeleteError(result.error ?? "No se pudo eliminar el producto.");
     }
   };
 
@@ -50,12 +63,12 @@ export function InventoryTable({ products }: InventoryTableProps) {
       <div className="mb-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-lg font-semibold text-slate-900">Inventario</h2>
-          <p className="text-sm text-slate-500">Estado de stock por producto</p>
+          <p className="text-sm text-slate-500">Estado de stock por ítem</p>
         </div>
 
         <div className="flex items-center gap-3">
           <span className="rounded-full bg-blue-50 px-3 py-1 text-sm font-medium text-blue-700">
-            {products.length} productos
+            {products.length} ítems
           </span>
           <button
             type="button"
@@ -67,13 +80,19 @@ export function InventoryTable({ products }: InventoryTableProps) {
         </div>
       </div>
 
+      {deleteError ? (
+        <div className="mb-4 rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">
+          {deleteError}
+        </div>
+      ) : null}
+
       {isFormOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 px-4 py-6">
           <div className="w-full max-w-2xl rounded-3xl bg-white p-6 shadow-2xl">
             <div className="mb-6 flex items-center justify-between">
               <div>
                 <h3 className="text-xl font-semibold text-slate-900">Añadir Producto</h3>
-                <p className="mt-1 text-sm text-slate-500">Completa los datos para registrar el producto.</p>
+                <p className="mt-1 text-sm text-slate-500">Completa los datos para registrar el producto terminado.</p>
               </div>
               <button
                 type="button"
@@ -107,17 +126,7 @@ export function InventoryTable({ products }: InventoryTableProps) {
                   type="number"
                   name="stock"
                   min="0"
-                  defaultValue={0}
-                  required
-                  className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-100"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700">Precio</label>
-                <input
-                  type="number"
-                  name="price"
-                  min="0"
+                  step="0.1"
                   defaultValue={0}
                   required
                   className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-100"
@@ -156,8 +165,9 @@ export function InventoryTable({ products }: InventoryTableProps) {
             <tr>
               <th className="px-4 py-3 font-medium">Producto</th>
               <th className="px-4 py-3 font-medium">SKU</th>
+              <th className="px-4 py-3 font-medium">Tipo</th>
               <th className="px-4 py-3 font-medium">Stock</th>
-              <th className="px-4 py-3 font-medium">Precio</th>
+              <th className="px-4 py-3 font-medium">Unidad</th>
               <th className="px-4 py-3 font-medium">Acciones</th>
             </tr>
           </thead>
@@ -176,13 +186,18 @@ export function InventoryTable({ products }: InventoryTableProps) {
                       </div>
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-slate-600">{product.sku ?? '—'}</td>
+                  <td className="px-4 py-3 text-slate-600">{product.sku}</td>
+                  <td className="px-4 py-3 text-slate-600">
+                    {ITEM_TYPE_LABELS[product.type] ?? product.type}
+                  </td>
                   <td className="px-4 py-3">
                     <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${isLow ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700'}`}>
-                      {product.stock} unidades
+                      {product.stock}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-slate-700">${product.price.toLocaleString('es-CL')}</td>
+                  <td className="px-4 py-3 text-slate-600">
+                    {ITEM_UNIT_LABELS[product.unit] ?? product.unit}
+                  </td>
                   <td className="px-4 py-3">
                     <button
                       type="button"

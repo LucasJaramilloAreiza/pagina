@@ -1,19 +1,18 @@
 import { betterAuth } from "better-auth";
-import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import { prismaAdapter } from "better-auth/adapters/prisma";
 import { nextCookies } from "better-auth/next-js";
-
-type DrizzleDb = Parameters<typeof drizzleAdapter>[0];
+import type { PrismaClient } from "@prisma/client";
 
 interface AuthOptions {
-  db: DrizzleDb;
+  prisma: PrismaClient;
   baseURL?: string;
   trustedOrigins?: string[];
 }
 
-export function createAuth({ db, baseURL, trustedOrigins }: AuthOptions) {
+export function createAuth({ prisma, baseURL, trustedOrigins }: AuthOptions) {
   return betterAuth({
     baseURL,
-    database: drizzleAdapter(db, { provider: "pg" }),
+    database: prismaAdapter(prisma, { provider: "postgresql" }),
     emailAndPassword: { enabled: true },
     trustedOrigins,
     plugins: [nextCookies()],

@@ -1,14 +1,11 @@
-import { PGlite } from "@electric-sql/pglite";
-import { drizzle } from "drizzle-orm/pglite";
-import * as schema from "./schema";
+import { PrismaClient } from "@prisma/client";
 
-const globalForPGlite = globalThis as unknown as {
-  pglite: PGlite | undefined;
+const globalForPrisma = globalThis as unknown as {
+  prisma: PrismaClient | undefined;
 };
 
-export const pglite =
-  globalForPGlite.pglite ?? new PGlite("./data/pglite");
+export const prisma = globalForPrisma.prisma ?? new PrismaClient();
 
-globalForPGlite.pglite = pglite;
-
-export const db = drizzle({ client: pglite, schema });
+if (process.env.NODE_ENV !== "production") {
+  globalForPrisma.prisma = prisma;
+}

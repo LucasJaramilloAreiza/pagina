@@ -15,159 +15,268 @@ model User {
   id            String   @id @default(cuid())
   email         String   @unique
   name          String?
-  passwordHash  String
+  emailVerified Boolean  @default(false) @map("email_verified")
+  image         String?
+  passwordHash  String?  @map("password_hash")
   role          Role     @default(OPERARIO)
-  isActive      Boolean  @default(true)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  isActive      Boolean  @default(true) @map("is_active")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
 
   sessions      Session[]
+  accounts      Account[]
   auditLogs     AuditLog[]
   customers     Customer[]
   orders        Order[]
   incidents     Incident[]
+  batches       ProductionBatch[]
 
   @@map("users")
 }
 
 model Session {
-  id           String   @id @default(cuid())
-  userId       String
-  token        String   @unique
-  expiresAt    DateTime
-  createdAt    DateTime @default(now())
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  token     String   @unique
+  expiresAt DateTime @map("expires_at")
+  ipAddress String?  @map("ip_address")
+  userAgent String?  @map("user_agent")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("sessions")
 }
 
+model Account {
+  id                    String    @id @default(cuid())
+  accountId             String    @map("account_id")
+  providerId            String    @map("provider_id")
+  userId                String    @map("user_id")
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?   @map("access_token")
+  refreshToken          String?   @map("refresh_token")
+  idToken               String?   @map("id_token")
+  accessTokenExpiresAt  DateTime? @map("access_token_expires_at")
+  refreshTokenExpiresAt DateTime? @map("refresh_token_expires_at")
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
+
+  @@index([userId])
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id @default(cuid())
+  identifier String
+  value      String
+  expiresAt  DateTime @map("expires_at")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  @@index([identifier])
+  @@map("verification")
+}
+
 model RolePermission {
-  id          String   @id @default(cuid())
-  role        Role
-  resource    String
-  action      String
-  createdAt   DateTime @default(now())
+  id        String   @id @default(cuid())
+  role      Role
+  resource  String
+  action    String
+  createdAt DateTime @default(now())
 
   @@unique([role, resource, action])
   @@map("role_permissions")
 }
 
 model Customer {
-  id            String   @id @default(cuid())
-  name          String
-  email         String?
-  phone         String?
-  taxId         String?
-  address       String?
-  status        CustomerStatus @default(ACTIVE)
-  createdById   String?
-  createdBy     User?    @relation(fields: [createdById], references: [id])
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  orders        Order[]
-  incidents     Incident[]
+  id          String   @id @default(cuid())
+  name        String
+  email       String?
+  phone       String?
+  taxId       String?
+  address     String?
+  status      CustomerStatus @default(ACTIVE)
+  createdById String?
+  createdBy   User?    @relation(fields: [createdById], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  orders      Order[]
+  incidents   Incident[]
 
   @@map("customers")
 }
 
-model Product {
-  id            String   @id @default(cuid())
-  sku           String   @unique
-  name          String
-  description   String?
-  price         Int
-  stock         Int      @default(0)
-  categoryId    String?
-  category      Category? @relation(fields: [categoryId], references: [id])
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  orderItems    OrderItem[]
-
-  @@map("products")
-}
+// ==========================================
+// MÓDULO DE INVENTARIO Y PRODUCCIÓN
+// ==========================================
 
 model Category {
-  id            String   @id @default(cuid())
-  name          String   @unique
-  description   String?
-  products      Product[]
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  items       InventoryItem[] 
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   @@map("categories")
 }
 
+model InventoryItem {
+  id          String   @id @default(cuid())
+  sku         String   @unique
+  name        String
+  type        ItemType @default(FINISHED)
+  stock       Float    @default(0) 
+  unit        ItemUnit @default(UNIT)
+  categoryId  String?
+  category    Category? @relation(fields: [categoryId], references: [id])
+  
+  batchInputs      BatchInput[]
+  batchOutputs     BatchOutput[]
+  transactions     InventoryTransaction[]
+  orderItems       OrderItem[]
+  invoiceItems     InvoiceItem[]
+
+  @@map("inventory_items")
+}
+
+model ProductionStation {
+  id          String   @id @default(cuid())
+  name        String   @unique 
+  description String?
+  isActive    Boolean  @default(true)
+  
+  batches     ProductionBatch[]
+
+  @@map("production_stations")
+}
+
+model ProductionBatch {
+  id          String   @id @default(cuid())
+  stationId   String
+  station     ProductionStation @relation(fields: [stationId], references: [id])
+  operatorId  String?
+  operator    User?    @relation(fields: [operatorId], references: [id])
+  
+  status      BatchStatus @default(COMPLETED)
+  notes       String?
+  recordedAt  DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  inputs      BatchInput[]
+  outputs     BatchOutput[]
+
+  @@map("production_batches")
+}
+
+model BatchInput {
+  id          String   @id @default(cuid())
+  batchId     String
+  batch       ProductionBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  itemId      String
+  item        InventoryItem   @relation(fields: [itemId], references: [id])
+  quantity    Float    
+  
+  @@map("batch_inputs")
+}
+
+model BatchOutput {
+  id          String   @id @default(cuid())
+  batchId     String
+  batch       ProductionBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  itemId      String
+  item        InventoryItem   @relation(fields: [itemId], references: [id])
+  quantity    Float    
+  
+  @@map("batch_outputs")
+}
+
+model InventoryTransaction {
+  id          String   @id @default(cuid())
+  itemId      String
+  item        InventoryItem @relation(fields: [itemId], references: [id])
+  type        TransactionType
+  quantity    Float    
+  reason      TransactionReason
+  referenceId String?  
+  createdAt   DateTime @default(now())
+
+  @@map("inventory_transactions")
+}
+
+// ==========================================
+// MÓDULO DE VENTAS Y TICKETS
+// ==========================================
+
 model Order {
-  id            String      @id @default(cuid())
-  orderNumber   String      @unique
-  customerId    String
-  customer      Customer    @relation(fields: [customerId], references: [id])
-  assignedToId  String?
-  assignedTo    User?       @relation(fields: [assignedToId], references: [id])
-  status        OrderStatus @default(PENDING)
-  total         Int
-  currency      String      @default("USD")
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
-  items         OrderItem[]
+  id           String      @id @default(cuid())
+  orderNumber  String      @unique
+  customerId   String
+  customer     Customer    @relation(fields: [customerId], references: [id])
+  assignedToId String?
+  assignedTo   User?       @relation(fields: [assignedToId], references: [id])
+  status       OrderStatus @default(PENDING)
+  total        Int
+  currency     String      @default("USD")
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  items           OrderItem[]
+  posTransactions PosTransaction[]
+  invoices        Invoice[]
 
   @@map("orders")
 }
 
 model OrderItem {
-  id            String   @id @default(cuid())
-  orderId       String
-  order         Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  productId     String
-  product       Product  @relation(fields: [productId], references: [id])
-  quantity      Int
-  unitPrice     Int
-  total         Int
-  createdAt     DateTime @default(now())
+  id        String   @id @default(cuid())
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  itemId    String   
+  item      InventoryItem  @relation(fields: [itemId], references: [id]) 
+  quantity  Int
+  unitPrice Int
+  total     Int
+  createdAt DateTime @default(now())
 
   @@map("order_items")
 }
 
 model Incident {
-  id            String        @id @default(cuid())
-  title         String
-  description   String?
-  severity      IncidentSeverity @default(MEDIUM)
-  status        IncidentStatus @default(OPEN)
-  customerId    String?
-  customer      Customer?     @relation(fields: [customerId], references: [id])
-  assignedToId  String?
-  assignedTo    User?         @relation(fields: [assignedToId], references: [id])
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
+  id           String    @id @default(cuid())
+  title        String
+  description  String?
+  severity     IncidentSeverity @default(MEDIUM)
+  status       IncidentStatus @default(OPEN)
+  customerId   String?
+  customer     Customer? @relation(fields: [customerId], references: [id])
+  assignedToId String?
+  assignedTo   User?     @relation(fields: [assignedToId], references: [id])
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
   @@map("incidents")
 }
 
 model AuditLog {
-  id            String   @id @default(cuid())
-  userId        String?
-  user          User?    @relation(fields: [userId], references: [id])
-  action        String
-  entityType    String
-  entityId      String
-  metadata      String?
-  createdAt     DateTime @default(now())
+  id         String   @id @default(cuid())
+  userId     String?
+  user       User?    @relation(fields: [userId], references: [id])
+  action     String
+  entityType String
+  entityId   String
+  metadata   String?
+  createdAt  DateTime @default(now())
 
   @@map("audit_logs")
 }
 
-model ProductionBatch {
-  id                String   @id @default(cuid())
-  machine           String
-  rawMaterialKg     Float
-  producedBoxes     Int
-  recordedAt        DateTime @default(now())
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-
-  @@map("production_batches")
-}
+// ==========================================
+// ENUMS
+// ==========================================
 
 enum Role {
   ADMIN
@@ -199,4 +308,187 @@ enum IncidentStatus {
   IN_PROGRESS
   RESOLVED
   CLOSED
+}
+
+// Nuevos Enums para Producción e Inventario
+enum ItemType {
+  RAW_MATERIAL
+  INTERMEDIATE
+  FINISHED
+}
+
+enum ItemUnit {
+  KG
+  LITER
+  UNIT
+}
+
+enum BatchStatus {
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum TransactionType {
+  IN
+  OUT
+  ADJUSTMENT
+}
+
+enum TransactionReason {
+  PRODUCTION_CONSUMPTION
+  PRODUCTION_YIELD
+  SALE
+  MANUAL_ADJUSTMENT
+}
+
+// ==========================================
+// MÓDULO POS Y FISCAL (legacy migrado)
+// ==========================================
+
+model PaymentMethod {
+  id              Int              @id @default(autoincrement())
+  name            String           @unique
+  createdAt       DateTime         @default(now()) @map("created_at")
+  posTransactions PosTransaction[]
+
+  @@map("payment_methods")
+}
+
+model PosTransaction {
+  id              Int            @id @default(autoincrement())
+  description     String?
+  orderId         String?        @map("order_id")
+  order           Order?         @relation(fields: [orderId], references: [id])
+  paymentMethodId Int?           @map("payment_method_id")
+  paymentMethod   PaymentMethod? @relation(fields: [paymentMethodId], references: [id])
+  amount          Int
+  userUid         String         @map("user_uid")
+  type            String?
+  category        String?
+  status          String?
+  createdAt       DateTime       @default(now()) @map("created_at")
+
+  @@map("pos_transactions")
+}
+
+model City {
+  id        Int    @id
+  name      String
+  stateCode String @map("state_code")
+
+  @@map("cities")
+}
+
+model FiscalSetting {
+  id                      Int       @id @default(autoincrement())
+  userUid                 String    @unique @map("user_uid")
+  companyName             String    @map("company_name")
+  tradeName               String?   @map("trade_name")
+  taxId                   String    @map("tax_id")
+  stateTaxId              String    @map("state_tax_id")
+  taxRegime               Int       @map("tax_regime")
+  stateCode               String    @map("state_code")
+  cityCode                String    @map("city_code")
+  cityName                String    @map("city_name")
+  street                  String
+  streetNumber            String    @map("street_number")
+  district                String
+  zipCode                 String    @map("zip_code")
+  addressComplement       String?   @map("address_complement")
+  environment             Int       @default(2)
+  nfeSeries               Int?      @default(1) @map("nfe_series")
+  nfceSeries              Int?      @default(1) @map("nfce_series")
+  nextNfeNumber           Int?      @default(1) @map("next_nfe_number")
+  nextNfceNumber          Int?      @default(1) @map("next_nfce_number")
+  cscId                   String?   @map("csc_id")
+  cscToken                String?   @map("csc_token")
+  certificatePfx          Bytes?    @map("certificate_pfx")
+  certificatePassword     String?   @map("certificate_password")
+  certificateValidUntil   DateTime? @map("certificate_valid_until")
+  defaultNcm              String?   @default("00000000") @map("default_ncm")
+  defaultCfop             String?   @default("5102") @map("default_cfop")
+  defaultIcmsCst          String?   @default("00") @map("default_icms_cst")
+  defaultPisCst           String?   @default("99") @map("default_pis_cst")
+  defaultCofinsCst        String?   @default("99") @map("default_cofins_cst")
+  createdAt               DateTime  @default(now()) @map("created_at")
+  updatedAt               DateTime  @updatedAt @map("updated_at")
+
+  @@map("fiscal_settings")
+}
+
+model Invoice {
+  id               Int            @id @default(autoincrement())
+  userUid          String         @map("user_uid")
+  orderId          String?        @map("order_id")
+  order            Order?         @relation(fields: [orderId], references: [id])
+  model            Int
+  series           Int
+  number           Int
+  accessKey        String?        @map("access_key")
+  operationNature  String?        @default("VENDA") @map("operation_nature")
+  operationType    Int?           @default(1) @map("operation_type")
+  status           String         @default("pending")
+  environment      Int
+  requestXml       String?        @map("request_xml")
+  responseXml      String?        @map("response_xml")
+  protocolXml      String?        @map("protocol_xml")
+  protocolNumber   String?        @map("protocol_number")
+  statusCode       Int?           @map("status_code")
+  statusMessage    String?        @map("status_message")
+  issuedAt         DateTime       @map("issued_at")
+  authorizedAt     DateTime?      @map("authorized_at")
+  totalAmount      Int            @map("total_amount")
+  isContingency    Boolean        @default(false) @map("is_contingency")
+  contingencyType  String?        @map("contingency_type")
+  contingencyAt    DateTime?      @map("contingency_at")
+  contingencyReason String?       @map("contingency_reason")
+  recipientTaxId   String?        @map("recipient_tax_id")
+  recipientName    String?        @map("recipient_name")
+  createdAt        DateTime       @default(now()) @map("created_at")
+  items            InvoiceItem[]
+  events           InvoiceEvent[]
+
+  @@map("invoices")
+}
+
+model InvoiceItem {
+  id            Int      @id @default(autoincrement())
+  invoiceId     Int      @map("invoice_id")
+  invoice       Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  itemId        String?  @map("item_id")
+  item          InventoryItem? @relation(fields: [itemId], references: [id])
+  itemNumber    Int      @map("item_number")
+  productCode   String   @map("product_code")
+  description   String
+  ncm           String
+  cfop          String
+  unitOfMeasure String   @default("UN") @map("unit_of_measure")
+  quantity      Int
+  unitPrice     Int      @map("unit_price")
+  totalPrice    Int      @map("total_price")
+  icmsCst       String?  @map("icms_cst")
+  icmsRate      Int?     @default(0) @map("icms_rate")
+  icmsAmount    Int?     @default(0) @map("icms_amount")
+  pisCst        String?  @map("pis_cst")
+  cofinsCst     String?  @map("cofins_cst")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  @@map("invoice_items")
+}
+
+model InvoiceEvent {
+  id             Int      @id @default(autoincrement())
+  invoiceId      Int      @map("invoice_id")
+  invoice        Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  eventType      String   @map("event_type")
+  sequence       Int?     @default(1)
+  protocolNumber String?  @map("protocol_number")
+  statusCode     Int?     @map("status_code")
+  reason         String?
+  requestXml     String?  @map("request_xml")
+  responseXml    String?  @map("response_xml")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  @@map("invoice_events")
 }

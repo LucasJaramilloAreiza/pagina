@@ -1,64 +1,84 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { db } from "@/lib/db";
-import { products } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { PrismaClient, ItemType, ItemUnit } from "@prisma/client";
 import { getAuthUser } from "@/lib/auth-guard";
+
+const prisma = new PrismaClient();
 
 type CreateProductData = {
   name: string;
   sku?: string;
   stock: number;
-  price: number;
   category?: string;
 };
 
 export async function createProduct(data: CreateProductData) {
   const name = data.name?.toString().trim() ?? "";
-  const sku = data.sku?.toString().trim() ?? "";
+  // Si no envían SKU, generamos uno temporal porque es obligatorio y único en la base de datos
+  const sku = data.sku?.toString().trim() ?? `SKU-${Date.now()}`; 
   const stock = Number(data.stock);
-  const price = Number(data.price);
-  const category = data.category?.toString().trim() ?? "";
 
-  if (!name || Number.isNaN(stock) || Number.isNaN(price) || stock < 0 || price < 0) {
-    return;
+  if (!name || Number.isNaN(stock) || stock < 0) {
+    return { success: false, error: "Datos inválidos" };
   }
 
+  // Verificamos el usuario por si necesitas usar su información para logs más adelante
   const user = await getAuthUser();
-  const userUid = user?.id ?? "demo-user";
 
-  await db.insert(products).values({
-    name,
-    description: null,
-    codigo_barras: sku || null,
-    in_stock: stock,
-    price,
-    category: category || null,
-    user_uid: userUid,
-  });
+  try {
+    await prisma.inventoryItem.create({
+      data: {
+        name,
+        sku,
+        stock,
+        type: ItemType.FINISHED, // Asumimos que desde el dashboard crean productos para la venta
+        unit: ItemUnit.UNIT,
+        // categoryId: category, // Descomenta si tu formulario envía el ID real de la categoría
+      },
+    });
 
-  revalidatePath("/dashboard");
+    revalidatePath("/dashboard");
+    return { success: true };
+  } catch (error) {
+    console.error("Error al crear el producto:", error);
+    return { success: false, error: "No se pudo crear el producto en la base de datos." };
+  }
 }
 
 type DeleteProductData = {
-  productId: number;
+  productId: string; // ¡Ojo aquí! Cambió de 'number' a 'string' (CUID)
 };
 
 export async function deleteProduct(data: DeleteProductData) {
-  const id = Number(data.productId);
-  if (!Number.isFinite(id) || id <= 0) {
-    return;
+  const id = data.productId;
+  
+  if (!id) {
+    return { success: false, error: "ID de producto inválido" };
   }
 
-  const user = await getAuthUser();
-  const userUid = user?.id;
+  try {
+    // 1. VALIDACIÓN DE SEGURIDAD (Kardex y Ventas)
+    // No podemos borrar un producto que ya tiene historial o romperá la contabilidad
+    const hasTransactions = await prisma.inventoryTransaction.findFirst({ where: { itemId: id } });
+    const hasOrders = await prisma.orderItem.findFirst({ where: { itemId: id } });
 
-  let query = db.delete(products).where(eq(products.id, id));
-  if (userUid) {
-    query = query.where(eq(products.user_uid, userUid));
+    if (hasTransactions || hasOrders) {
+      return { 
+        success: false, 
+        error: "No se puede eliminar. Este producto tiene un historial de producción o pedidos asociados." 
+      };
+    }
+
+    // 2. Si está limpio, procedemos a borrarlo físicamente
+    await prisma.inventoryItem.delete({
+      where: { id },
+    });
+
+    revalidatePath("/dashboard");
+    return { success: true };
+  } catch (error) {
+    console.error("Error al eliminar el producto:", error);
+    return { success: false, error: "Hubo un problema de base de datos al intentar eliminar el ítem." };
   }
-
-  await query;
-  revalidatePath("/dashboard");
 }

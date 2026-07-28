@@ -1,26 +1,30 @@
-import { db } from '@/lib/db';
-import { customers, products } from '@/lib/db/schema';
+import { PrismaClient } from '@prisma/client';
 import { InventoryTable } from '@/components/InventoryTable';
 import { CustomerList } from '@/components/CustomerList';
 import { KpiCard } from '@/components/KpiCard';
 
+const prisma = new PrismaClient();
+
 async function getDashboardData() {
-  const [customersList, productsList] = await Promise.all([
-    db.select().from(customers).orderBy(customers.created_at, 'desc').limit(6),
-    db
-      .select({
-        id: products.id,
-        name: products.name,
-        codigo_barras: products.codigo_barras,
-        stock: products.in_stock,
-        price: products.price,
-        category: products.category,
-      })
-      .from(products)
-      .orderBy(products.in_stock, 'asc'),
+  const [customersList, itemsList] = await Promise.all([
+    prisma.customer.findMany({ orderBy: { createdAt: 'desc' }, take: 6 }),
+    prisma.inventoryItem.findMany({
+      include: { category: true },
+      orderBy: { stock: 'asc' },
+    }),
   ]);
 
-  return { customers: customersList, products: productsList };
+  const products = itemsList.map((item) => ({
+    id: item.id,
+    name: item.name,
+    sku: item.sku,
+    stock: item.stock,
+    type: item.type,
+    unit: item.unit,
+    category: item.category?.name ?? null,
+  }));
+
+  return { customers: customersList, products };
 }
 
 export default async function DashboardPage() {
